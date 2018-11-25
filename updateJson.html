@@ -1,0 +1,113 @@
+<html>
+<head>
+<script src="https://www.gstatic.com/firebasejs/5.5.8/firebase.js"></script>
+
+<!-- Get this code from your Firebase project -->
+<!-- https://console.firebase.google.com/u/0/ -->
+
+<script>
+  // Initialize Firebase
+  var config = {
+    apiKey: "AIzaSyAtzfklu5C39cxleqj_mNCYbIabDyVBQIE",
+    authDomain: "firemessage-d240b.firebaseapp.com",
+    databaseURL: "https://firemessage-d240b.firebaseio.com",
+    projectId: "firemessage-d240b",
+    storageBucket: "firemessage-d240b.appspot.com",
+    messagingSenderId: "202060504998"
+  };
+  firebase.initializeApp(config);
+  console.log(firebase);
+  
+  var database = firebase.database();
+</script>
+
+<h1>Load JSON File to Firebase</h1>
+<input type="file" id="attachFile" onchange="attachFunction()">
+<p id="demo"></p>
+<p id="newfilename"></p>
+<p id="uploadStatus"></p>
+<button id="updateButton">Update Data</button>
+<button id="uploadButton">Upload File</button>
+
+<script type="text/javascript" src="http://ajax.googleapis.com/ajax/libs/jquery/1.6.2/jquery.min.js"> </script>
+<script>
+function attachFunction(){
+	
+	updateButton.addEventListener('click', function(){
+	var x = document.getElementById("attachFile");
+    var txt = "";
+	if ('files' in x) {
+		if (x.files.length == 0) {
+            txt = "";
+        } else {
+            for (var i = 0; i < x.files.length; i++) {
+				txt += "<br><strong>" + "Loaded File: "+ x.files[i].name + "</strong> (" + x.files[i].size + " bytes)<br>";				
+				var file = x.files[i];
+				console.log(x.files[i].name);
+				$.getJSON(x.files[i].name, function(data) {
+			    $.each(data, function(i, f) {
+				  var tblRow = "<tr>" + "<td>" + f.PROV_NAME + "</td>" + "<td>" + f.BRGYCODE + "</td>" + "<td>" + f.PH_Range + "<td>" + f.PH_Desc + "<td>" + f.OM_Range + "<td>" + f.OM_Desc + "<td>" + f.P_Range + "<td>" + f.P_Desc + "<td>" + f.K_Range + "<td>" + f.K_Desc + "<td>" + f.SoilSeries + "<td>" + f.SoilType + "<td>" + f.TypeAbbr + "<td>" + f.CROP + "</td>" + "</tr>"
+				   $(tblRow).appendTo("#userdata tbody");
+				   console.log(data);
+			 
+				  var database = firebase.database();
+				  var firemessageRef = database.ref(f.PROV_NAME).child('BRGYCODES').child(f.BRGYCODE);
+				  var result = firemessageRef.update({
+					//first variables defined are variables mixed with uppercase letters
+					//second variables defined here are based on the variables on top to get data from the csv file
+						BRGY_NAME: f.BRGY_NAME,
+						BryArea_Ha: f.BryArea_Ha,
+						PH_Range: f.PH_Range,
+						PH_Desc: f.PH_Desc,
+						OM_Range: f.OM_Range,
+						OM_Desc: f.OM_Desc,
+						P_Range: f.P_Range,
+						P_Desc: f.P_Desc,
+						K_Range: f.K_Range,
+						K_Desc: f.K_Desc,
+						SoilSeries: f.SoilSeries,
+						SoilType: f.SoilType,
+						TypeAbbr: f.TypeAbbr,
+						CROP: f.CROP
+						
+					})
+					var utc = new Date().toJSON().slice(0,10).replace(/-/g,'/');
+					document.getElementById("demo").innerHTML = txt;
+					document.getElementById("uploadStatus").innerHTML = 'Message: The database has been updated. '+ utc;	
+				 })
+				})
+				
+				var storage = firebase.storage();
+				var file = x.files[i];
+				var timeStamp = (new Date()).getTime();
+				
+				var storageRef = storage.ref('json/'+ timeStamp + '/' + file.name);
+				var uploadTask = storageRef.put(file);
+				console.log('Uploading ' + file.name)
+				uploadTask.on('state_changed', loadUpload, errUpload, completeUpload)
+				
+				function loadUpload(data){
+					var percent = data.bytesTransferred/data.totalBytes * 100
+					//progress.value = percent
+				}
+				function errUpload(err){
+					console.log('error')
+					console.log(data)
+				}
+
+				function completeUpload(data){
+					console.log('success')
+					console.log(data)
+					document.getElementById('uploadStatus').innerHTML = '<b> Upload Success!</b>';
+					
+				}				
+				} // end of for loop.						
+			}
+            if ('size' in file) {
+            txt += "size: " + file.size + " bytes <br>";
+            }
+            }
+        })
+		
+	}
+</script>
